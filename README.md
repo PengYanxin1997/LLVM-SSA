@@ -81,7 +81,7 @@ LLVM IR有3种表示形式
     x1 = *(&x0)
     return x1;
 
-可以很容易地看出，以上形式并非SSA。但是我注意到不论变量是否被取过地址，好像LLVM对变量的使用均会创建一个局部标识符（即不论变量是否被赋值，均使用新的变量下标）。于是我进行了进一步的验证。
+可以很容易地看出，以上形式并非SSA（%2使用大于两次，即使内存地址的内容改变）。但是我注意到不论变量是否被取过地址，好像LLVM对变量的使用均会创建一个局部标识符（即不论变量是否被赋值，均使用新的变量下标）。于是我进行了进一步的验证。
 
 
 3 构造一个可以完全转换成SSA形式的程序
@@ -105,7 +105,7 @@ LLVM IR有3种表示形式
         %5 = alloca double, align 8
         %6 = alloca i32, align 4
         store i32 %0, i32* %3, align 4
-        store i32 %1, i32* %4, align 4shiyong
+        store i32 %1, i32* %4, align 4
         store double 5.500000e+00, double* %5, align 8
         %7 = load i32, i32* %3, align 4
         %8 = load i32, i32* %4, align 4
@@ -113,15 +113,15 @@ LLVM IR有3种表示形式
         br i1 %9, label %10, label %13
 
 
-可以看到，在判断a是否大于b的语句中，即使a、b变量在使用前都没有被修改过值，Clang编译后依然使用了新的局部标识符（%7、%8）。因此可以断定，不论是否含有address-taken变量，使用O0级编译生成的LLVM的中间形式都不是完全的SSA形式。
+可以看到，函数调用中Clang编译后依然使用了多次%3，%4标识符（alloca和store）。因此可以断定，以上代码即使不含有address-taken变量，使用O0级编译生成的LLVM的中间形式都不是完全的SSA形式。
 
 后来我继续了解发现，这是LLVM所特有的特性，这样做主要是为了将前端Clang分离。LLVM官方文档对此也有说明：
 
 > LLVM does require all register values to be in SSA form, it does not require (or permit) memory objects to be in SSA form.
 
-如果是因为O0级别的编译不作任何优化才导致的非完全SSA形式，那么尝试O1级别的编译会怎么样呢，编译test2.c产生的文件在`/dist/test2-01.ll`，可以看到其形式过于简化，同样看不是SSA形式。
+如果是因为O0级别的编译不作任何优化才导致的非完全SSA形式，那么尝试O1级别的编译会怎么样呢，编译test2.c产生的文件在`/dist/test2-01.ll`，可以看到其形式过于简化，但基本是SSA形式。
 
-因此得到一个无奈的结论，LLVM-IR不是完全的SSA表示。
+因此得到一个结论，LLVM-IR不一定是完全的SSA表示。
 
 
 4 实验中踩过的坑
