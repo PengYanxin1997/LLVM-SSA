@@ -100,7 +100,7 @@ LLVM IR有3种表示形式
 
 
     define dso_local i32 @f(i32 %0, i32 %1) #0 {
-      %3 = alloca i32, align 4
+        %3 = alloca i32, align 4
         %4 = alloca i32, align 4
         %5 = alloca double, align 8
         %6 = alloca i32, align 4
@@ -120,6 +120,7 @@ LLVM IR有3种表示形式
 > LLVM does require all register values to be in SSA form, it does not require (or permit) memory objects to be in SSA form.
 
 如果是因为O0级别的编译不作任何优化才导致的非完全SSA形式，那么尝试O1级别的编译会怎么样呢，编译test2.c产生的文件在`/dist/test2-01.ll`，可以看到其形式过于简化，同样看不是SSA形式。
+
 因此得到一个无奈的结论，LLVM-IR不是完全的SSA表示。
 
 
